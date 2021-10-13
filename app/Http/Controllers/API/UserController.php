@@ -31,7 +31,7 @@ class UserController extends Controller{
 
 	// get all posts with their comments to user 
 	public function getPosts(){
-		$posts = Post::withCount('comments')->get();		
+		$posts = User::with(['posts','posts.comments'])->get();		
 		return json_encode($posts);
 	}
 	
