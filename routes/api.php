@@ -36,4 +36,6 @@ Route::group(['middleware' => 'auth.jwt'], function () {
     Route::post('gift_user', [UserController::class, 'gift_user'])->name('api:gift_user');
     Route::post('follow', [UserController::class, 'follow'])->name('api:follow');
     Route::post('unfollow', [UserController::class, 'unFollow'])->name('api:unfollow');
+    Route::post('block', [UserController::class, 'block'])->name('api:block');
+    Route::post('unblock', [UserController::class, 'unblock'])->name('api:unblock');
 });

@@ -15,11 +15,14 @@ class CreateGiftsTable extends Migration
     {
         Schema::create('gifts', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id');
+            $table->unsignedBigInteger('user_id');
             $table->string('gift_name');
             $table->integer('type');
             $table->integer('amount');
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users');
+
+            
         });
     }
 

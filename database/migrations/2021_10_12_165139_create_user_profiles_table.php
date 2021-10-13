@@ -15,15 +15,14 @@ class CreateUserProfilesTable extends Migration
     {
         Schema::create('user_profiles', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id');
+            $table->unsignedBigInteger('user_id');
             $table->text('bio')->nullable();
             $table->date('dob')->nullable();
             $table->string('profile_picture_path')->nullable();
             $table->string('gender')->nullable();
             $table->string('phone_number')->nullable();
-
-
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users')->constrained();
         });
     }
 

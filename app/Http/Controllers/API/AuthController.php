@@ -62,6 +62,7 @@ class AuthController extends Controller{
 			"first_name" => $request -> first_name,
 			"last_name" => $request -> last_name,
 			"email" => $request -> email,
+            "score" => 0,
 			"password" => bcrypt($request -> password),
 	
             'created_at' => Carbon::now()->format('Y-m-d H:i:s'),

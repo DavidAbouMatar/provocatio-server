@@ -18,6 +18,7 @@ use App\Models\Gift;
 
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Database\Schema\Builder;
 // use JWTAuth;
 
 
@@ -30,15 +31,13 @@ class UserController extends Controller{
 
 	// get all posts with their comments to user 
 	public function getPosts(){
-
-		$posts = Post::with('comments')->get();
-					
+		$posts = Post::withCount('comments')->get();		
 		return json_encode($posts);
 	}
-
+	
 	public function get_one_post($uid){
 		// $post = Post::find($uid);
-		$post = Post::with('comments')->with('users')->where('id',$uid)->get();
+		$post = Post::with('comments')->where('id',$uid)->get();
 		// $comments = $post->comments()->get();
 		return json_encode($post);
 	}
@@ -65,7 +64,29 @@ class UserController extends Controller{
 		], 200);
 
 	}
+	//follow a user by id
+	public function block(Request $request){
+		$uid = $request->uid;
 
+		JWTAuth::user()->block()->attach($uid);
+		return response()->json([
+			'status' => true,
+			'message' => 'User profile successfully updated',
+		], 200);
+
+	}
+
+	//unFollow a user by id
+	public function unBlock(Request $request){
+		$uid = $request->uid;
+
+		JWTAuth::user()->block()->detacht($uid);
+		return response()->json([
+			'status' => true,
+			'message' => 'User profile successfully updated',
+		], 200);
+
+	}
 
 	// edit profile. profile picture is included 
 	public function edit_profile(Request $request) {
@@ -73,13 +94,13 @@ class UserController extends Controller{
 		$file_path="";
 		if($request->profile_picture){
 			// base64 encoded image
-		$image = $request -> image_string;  
+		$image = $request -> profile_picture;  
 		//name image
     	$imageName = Str::random(12).'.'.'jpg';
 		// decode and store image public/storage/profileImages
-		Storage::disk('profileImages')->put($imageName, base64_decode($image));
+		Storage::disk('public')->put($imageName, base64_decode($image));
 		
-		$file_path  = 'http://127.0.0.1:8000' . '/storage/profileImages' . $imageName;
+		$file_path  = 'http://127.0.0.1:8000' . '/storage/' . $imageName;
 		}
 		
 		$user = JWTAuth::user()->id;
@@ -90,7 +111,7 @@ class UserController extends Controller{
 			"dob" => $request -> dob,
 			"gender" => $request -> gender,
 			"phone_number" => $request -> phone_number,
-			"profile_picture_path" => $request->$file_path
+			"profile_picture_path" => $file_path
 			]
 		);
 
@@ -151,10 +172,10 @@ class UserController extends Controller{
 		//has bugs
 	function getUserProfile(){
 		$user = JWTAuth::user()->id;
-		$user_data =User::with(['user_profiles'])->where('id',$user)->get();
+		// $user_data =User::withCount('comments')->get();
 
 		
-		// $user_data = User::with('user_profiles')->get();			
+		$user_data = User::find($user)->userProfile;			
 		return json_encode($user_data);
 	}
 

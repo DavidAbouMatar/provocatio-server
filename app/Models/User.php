@@ -71,13 +71,17 @@ class User extends Authenticatable implements JWTSubject
     public function comments(){
         return $this->hasMany('App\Models\Comment','user_id');
     }
-    public function connections()
-{
+    public function connections(){
     return $this->belongsToMany(User::class, 'connections', 'user_id', 'friend_id');
-}
+
+    }
+    public function block(){
+        return $this->belongsToMany(User::class, 'blocks', 'user_id', 'blocked_id');
+    
+        }
 
     public function userProfile(){
-		return $this->hasOne(UserProfile::class,'user_id','id');
+		return $this->hasOne(UserProfile::class);
         // return $this->hasOne(UserProfile::class);
 	}
 }

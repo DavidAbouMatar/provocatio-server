@@ -15,11 +15,12 @@ class CreateChallengesTable extends Migration
     {
         Schema::create('challenges', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id');
-            $table->integer('for_user_id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('for_user_id');
             $table->text('discription');
             $table->boolean('is_done')->nullable();
             $table->timestamps();
+
         });
     }
 
