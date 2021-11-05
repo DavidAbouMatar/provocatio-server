@@ -25,7 +25,7 @@ class PostFactory extends Factory
         return [
             'user_id' =>  User::all()->random()->id,
             'caption' => $this->faker->text(),
-            'path' => $this->faker->url(),
+            'path' => $this->faker->imageUrl('profile'),
             'type' => rand(0,1),
           
         ];

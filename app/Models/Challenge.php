@@ -10,6 +10,10 @@ class Challenge extends Model
 	protected $table = "challenges";
 
 
+	public function user(){
+		return $this->belongsToMany('App\Models\User', 'user_id', 'id');
+	}
+
 
 
 }

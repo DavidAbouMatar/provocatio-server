@@ -20,7 +20,13 @@ class CreateUsersTable extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->longText('fcm_token')->nullable();
             $table->string('score');
+            $table->text('bio')->nullable();
+            $table->date('dob')->nullable();
+            $table->string('profile_picture_path')->nullable();
+            $table->string('gender')->nullable();
+   
             $table->rememberToken();
             $table->timestamps();
         });

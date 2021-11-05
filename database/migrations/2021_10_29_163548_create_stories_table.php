@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUserProfilesTable extends Migration
+class CreateStoriesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,16 +13,11 @@ class CreateUserProfilesTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_profiles', function (Blueprint $table) {
+        Schema::create('stories', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->text('bio')->nullable();
-            $table->date('dob')->nullable();
-            $table->string('profile_picture_path')->nullable();
-            $table->string('gender')->nullable();
-   
+            $table->string('source');
             $table->timestamps();
-            $table->foreign('user_id')->references('id')->on('users')->constrained();
         });
     }
 
@@ -33,6 +28,6 @@ class CreateUserProfilesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_profiles');
+        Schema::dropIfExists('stories');
     }
 }

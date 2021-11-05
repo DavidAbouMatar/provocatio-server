@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Config;
 use Illuminate\Support\Str;
 
 
@@ -14,7 +15,9 @@ use App\Models\User;
 use App\Models\Post;
 use App\Models\UserProfile;
 use App\Models\Challenge;
-use App\Models\Gift;
+use App\Models\Like;
+use App\Models\Story;
+
 
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -26,12 +29,24 @@ use Illuminate\Database\Schema\Builder;
 class UserController extends Controller{
 	
 
+	
+	function getUserProfile($id){
 
-
+		$user = JWTAuth::user();
+		$profile = User::with('posts')->with('isFollowing')->withCount(['followed','followers'])->where('id', $id)->get();			
+		return json_encode($profile);
+	}
 
 	// get all posts with their comments to user 
 	public function getPosts(){
-		$posts = User::with(['posts','posts.comments'])->get();		
+		
+		$feeds = Post::with('user')->where('id', 1)->get();
+		$feed = Post::with(['user','user.likes','comments','isAuthLiked'])->withCount(['likes','comments'])->get();		
+		return json_encode($feed);
+	}
+	public function get_user_Posts($id){
+		$user = JWTAuth::user();
+		$posts = User::with(['posts','posts.comments'])->where('id', $user)->get();		
 		return json_encode($posts);
 	}
 	
@@ -47,7 +62,7 @@ class UserController extends Controller{
 
 		JWTAuth::user()->connections()->attach($uid);
 		return response()->json([
-			'status' => true,
+			'status' => $uid,
 			'message' => 'User profile successfully updated',
 		], 200);
 
@@ -57,7 +72,7 @@ class UserController extends Controller{
 	public function unFollow(Request $request){
 		$uid = $request->uid;
 
-		JWTAuth::user()->connections()->detacht($uid);
+		JWTAuth::user()->connections()->detach($uid);
 		return response()->json([
 			'status' => true,
 			'message' => 'User profile successfully updated',
@@ -98,26 +113,25 @@ class UserController extends Controller{
 		//name image
     	$imageName = Str::random(12).'.'.'jpg';
 		// decode and store image public/storage/profileImages
+		
 		Storage::disk('public')->put($imageName, base64_decode($image));
 		
-		$file_path  = 'http://127.0.0.1:8000' . '/storage/' . $imageName;
+		$file_path  = Config::get("APP_URL")  . '/storage/' . $imageName;
 		}
 		
 		$user = JWTAuth::user()->id;
-		
-		$profile = UserProfile::updateOrCreate(
-			['user_id' => $user],
-			["bio" => $request -> bio,
+
+		 $profile = User::where('id', $user)
+		 ->update(["bio" => $request -> bio,
 			"dob" => $request -> dob,
 			"gender" => $request -> gender,
-			"phone_number" => $request -> phone_number,
 			"profile_picture_path" => $file_path
-			]
-		);
+	]);
+	
 
 	
 		return response()->json([
-			'status' => true,
+			'status' => $file_path,
 			'message' => 'User profile successfully updated',
 		], 201);
 	}	
@@ -146,19 +160,43 @@ class UserController extends Controller{
 	// run php artisan storage:link when testing
 	public function uploadMedia(Request $request){
 		$user = JWTAuth::user()->id;
-
+		$type = $request->type;
 		$fileModel = new Post();
-		// base64 encoded image
-		$image = $request -> image_string;  
+		if($type == 0){
+			$image = $request -> image;  
+		// $image = substr_replace($newImage ,"",-5);
 		//name image
     	$imageName = Str::random(12).'.'.'jpg';
 		// decode and store image public/storage
+		
 		Storage::disk('public')->put($imageName, base64_decode($image));
 		$fileModel->user_id =$user;
 		$fileModel->caption =$request->caption;
 		$fileModel->type = 0;
-		$fileModel->path = 'http://127.0.0.1:8000' . '/storage/' . $imageName;
+		$fileModel->path =  'http://127.0.0.1:8000' . '/storage/' . $imageName;
 		$fileModel->save();
+
+		}else{
+			$image = $request -> image;  
+			$image = str_replace('data:image/png;base64,', '', $image);
+			$image = str_replace(' ', '+', $image);
+			// $newimage = substr_replace("data:image/png;base64," ,"",$image);
+			// $removeLast = str_replace(' ','+',$newimage);
+			//name image
+			$imageName = Str::random(12).'.'.'jpg';
+			// decode and store image public/storage
+			
+			Storage::disk('public')->put($imageName, base64_decode($image));
+			$fileModel->user_id =$user;
+			$fileModel->caption =$request->caption;
+			$fileModel->type = 0;
+			$fileModel->path = 'http://127.0.0.1:8000'  . '/storage/' . $imageName;
+			$fileModel->save();
+		}
+
+		
+		// base64 encoded image
+		
 
 		return response()->json(array(
 			"status" => true,
@@ -170,12 +208,10 @@ class UserController extends Controller{
 
 
 		//has bugs
-	function getUserProfile(){
+	function currentUser(){
 		$user = JWTAuth::user()->id;
 		// $user_data =User::withCount('comments')->get();
-
-		
-		$user_data = User::find($user)->userProfile;			
+		$user_data = User::find($user);			
 		return json_encode($user_data);
 	}
 
@@ -219,13 +255,30 @@ class UserController extends Controller{
 	}
 	//challenge is done
 	public function challenge_done(Request $request){
-	
+		$image = $request->image;
 		$id = $request->uid;
+		$user = JWTAuth::user()->id;
+		$imageName = Str::random(12).'.'.'jpg';
+		// decode and store image public/storage/profileImages
+		Storage::disk('public')->put($imageName, base64_decode($image));
+		// 'http://127.0.0.1:8000'
+		
+		$file_path  = 'http://127.0.0.1:8000'  . '/storage/' . $imageName;
+
 		$challenge=Challenge::where('id', $id,)
 		 	 ->update([
 				"is_done" => 1,
 				
 			]);
+
+
+			$story = new Story;
+
+			$story->user_id = $user;
+			$story->source = $file_path;
+	
+			$story->save();
+
 		return response()->json([
 			'status' => true,
 			'message' => 'challenge done',
@@ -233,11 +286,21 @@ class UserController extends Controller{
 
 
 }
+public function get_stories(){
+	$story = Story::with('user')->get();
+
+	$sto = Story::orderBy('stories.created_at', 'desc')
+    ->join('users', 'users.id', '=', 'stories.user_id')->get(['users.first_name AS user','users.profile_picture_path AS avatar', 'stories.source', 'stories.id']);
+  
+	return json_encode($sto);
+
+}
 
 public function get_challenges(){
 	$user = JWTAuth::user()->id;
-	$challenge = Challenge::where('for_user_id', $user)->get();
-	return json_encode($challenge);
+	$challenges = user::with('challenges')->where('id', $user)->get();
+	// $challenge = Challenge::where('for_user_id', $user)->get();
+	return json_encode($challenges);
 }
 public function buy_gifts(Request $request){
 	$validator = Validator::make($request->all(), [
@@ -296,6 +359,7 @@ public function get_gifts(){
 	return json_encode($gift);
 
 }
+
 
 }
 

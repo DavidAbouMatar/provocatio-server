@@ -20,6 +20,8 @@ class CreateChallengesTable extends Migration
             $table->text('discription');
             $table->boolean('is_done')->nullable();
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('for_user_id')->references('id')->on('users')->onDelete('cascade');
 
         });
     }

@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use App\Models\Messages;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -23,7 +25,12 @@ class User extends Authenticatable implements JWTSubject
         'last_name',
         'email',
         'password',
-        'score'
+        'fcm_token',
+        'score',
+        'bio',
+        'dob',
+        'profile_picture_path',
+        'gender',
     ];
 
     /**
@@ -64,19 +71,77 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    } 
+    
+
     public function posts(){
         return $this->hasMany('App\Models\Post');
     }
+    public function likes(){
+        return $this->hasMany('App\Models\Like');
+    }
+    public function story(){
+        return $this->hasOne('App\Models\Story');
+    }
+    
     
     // user can have many comments as well
     
     public function comments(){
         return $this->hasMany('App\Models\Comment','user_id');
     }
+
+    public function followers(){
+     
+		return $this->belongsToMany(User::class, 'connections', 'user_id', 'friend_id');
+	}
+
+    public function followed(){
+     
+		return $this->belongsToMany(User::class, 'connections', 'friend_id', 'user_id');
+	}
+
+    public function chat(){
+        // return $this->belongsToMany(User::class)->pivot(['sender', 'recipient'])->withTimestamps();
+       
+		return $this->belongsToMany(User::class, 'chats', 'sender', 'recipient')->withPivot('id')->orderBy('created_at');
+	}
+
+    public function chats(){
+     
+		return $this->belongsToMany(User::class, 'chats', 'recipient', 'sender')->withPivot('id')->orderBy('created_at');
+	}
+
+    public function challenges(){
+     
+		return $this->belongsToMany(User::class, 'challenges', 'user_id', 'for_user_id')->withPivot('id')->withPivot('discription')->orderBy('created_at');
+	}
+
+    // public function challenges(){
+    //     return $this->hasMany('App\Models\Challenge','user_id', 'id');
+    // }
+  
+
     public function connections(){
-    return $this->belongsToMany(User::class, 'connections', 'user_id', 'friend_id');
+    return $this->belongsToMany(User::class, 'connections', 'user_id' , 'friend_id');
 
     }
+    public function friendconnections(){
+        return $this->belongsToMany(User::class, 'connections', 'friend_id' , 'user_id');
+    
+        }
+    public function isFollowing()
+        {
+            return  $this->friendconnections()->where('user_id', JWTAuth::user()->id);
+        }
+
+    // public function followed(){
+    //     return $this->belongsToMany(User::class, 'connections', 'friend_id', 'user_id');
+    
+    //     }
     public function block(){
         return $this->belongsToMany(User::class, 'blocks', 'user_id', 'blocked_id');
     

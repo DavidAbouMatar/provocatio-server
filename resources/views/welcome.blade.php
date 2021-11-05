@@ -130,3 +130,11 @@
         </div>
     </body>
 </html>
+@section('scripts')
+    <script>
+        // Retrieve Firebase Messaging object.
+        const messaging = firebase.messaging();
+        // Add the public key generated from the console here.
+        messaging.usePublicVapidKey("your publicVapidKey");
+    </script>
+@endsection
